@@ -138,6 +138,7 @@
         #check-internet-btn:hover { background-color: #138496; }
         #ping-start-btn { background-color: #6c757d; }
         #ping-start-btn:hover { background-color: #5a6268; }
+        #ping-start-btn:disabled { background-color: #adb5bd; cursor: not-allowed; }
 
         .options-container {
             display: grid;
@@ -234,7 +235,6 @@
     <header>
         <h1>🚀 API Тестер</h1>
         <nav>
-            <!-- Ссылка на #ping_test НЕ добавляется сюда -->
             <a href="#main" class="nav-link active">Полная версия</a>
             <a href="#easy" class="nav-link">Версия проще</a>
             <a href="#internet_status" class="nav-link">Статус интернета</a>
@@ -309,10 +309,10 @@ Authorization: Bearer YOUR_TOKEN'></textarea>
 
         <!-- СЕКЦИЯ 4: СКРЫТАЯ СТРАНИЦА ПИНГ-ТЕСТА -->
         <section id="app-ping-test" class="app-section hidden">
-            <h2>🔍 Ping-тест</h2>
-            <p>Введите домен или URL, чтобы измерить время отклика (имитация ping через fetch).</p>
+            <h2>🔍 Настоящий Ping-тест</h2>
+            <p>Введите домен или IP-адрес. Тест будет выполнен через внешний API.</p>
             <div class="ping-test-container">
-                <input type="text" id="ping-host-input" placeholder="google.com или https://api.github.com">
+                <input type="text" id="ping-host-input" placeholder="google.com или 1.1.1.1">
                 <button id="ping-start-btn">Начать тест</button>
             </div>
             <div id="ping-results">Результаты теста появятся здесь...</div>
@@ -374,7 +374,6 @@ Authorization: Bearer YOUR_TOKEN'></textarea>
                     document.getElementById('app-status').classList.remove('hidden');
                     document.querySelector('a[href="#internet_status"]').classList.add('active');
                 } else if (hash === '#ping_test') {
-                    // Показываем скрытую страницу, но не трогаем активную ссылку в меню
                     document.getElementById('app-ping-test').classList.remove('hidden');
                 }
             }
@@ -382,167 +381,81 @@ Authorization: Bearer YOUR_TOKEN'></textarea>
             window.addEventListener('hashchange', handleRouting);
             handleRouting();
 
-            // --- ЛОГИКА ПОЛНОЙ ВЕРСИИ ---
+            // --- ЛОГИКА ПОЛНОЙ ВЕРСИИ (без изменений) ---
             sendBtn.addEventListener('click', sendRequest);
-
             async function sendRequest() {
-                const url = urlInput.value;
-                const method = httpMethodSelect.value;
-                const headersText = headersInput.value;
-                const bodyText = bodyInput.value;
-
-                if (!url) {
-                    alert('Пожалуйста, введите URL.');
-                    return;
-                }
-
-                const headers = {};
-                headersText.split('\n').forEach(line => {
-                    const parts = line.split(':');
-                    if (parts.length === 2) {
-                        headers[parts[0].trim()] = parts[1].trim();
-                    }
-                });
-
+                const url = urlInput.value; const method = httpMethodSelect.value; const headersText = headersInput.value; const bodyText = bodyInput.value;
+                if (!url) { alert('Пожалуйста, введите URL.'); return; }
+                const headers = {}; headersText.split('\n').forEach(line => { const parts = line.split(':'); if (parts.length === 2) { headers[parts[0].trim()] = parts[1].trim(); } });
                 const fetchOptions = { method: method, headers: headers };
-
-                if (['POST', 'PUT', 'PATCH'].includes(method) && bodyText) {
-                    try {
-                        fetchOptions.body = JSON.parse(bodyText);
-                        if (!headers['Content-Type']) {
-                             fetchOptions.headers['Content-Type'] = 'application/json';
-                        }
-                    } catch (e) {
-                        fetchOptions.body = bodyText;
-                    }
-                }
-                
-                responseBodyEl.textContent = 'Загрузка...';
-                responseStatusEl.textContent = '';
-                responseTimeEl.textContent = '';
-                responseStatusEl.className = '';
-
+                if (['POST', 'PUT', 'PATCH'].includes(method) && bodyText) { try { fetchOptions.body = JSON.parse(bodyText); if (!headers['Content-Type']) { fetchOptions.headers['Content-Type'] = 'application/json'; } } catch (e) { fetchOptions.body = bodyText; } }
+                responseBodyEl.textContent = 'Загрузка...'; responseStatusEl.textContent = ''; responseTimeEl.textContent = ''; responseStatusEl.className = '';
                 const startTime = performance.now();
-
                 try {
-                    const response = await fetch(url, fetchOptions);
-                    const endTime = performance.now();
-                    const responseTime = (endTime - startTime).toFixed(2);
-
-                    responseStatusEl.textContent = `Статус: ${response.status} ${response.statusText}`;
-                    responseTimeEl.textContent = `Время: ${responseTime} мс`;
-                    
-                    if (response.status >= 200 && response.status < 300) responseStatusEl.className = 'status-success';
-                    else if (response.status >= 300 && response.status < 400) responseStatusEl.className = 'status-redirect';
-                    else if (response.status >= 400 && response.status < 500) responseStatusEl.className = 'status-client-error';
-                    else if (response.status >= 500) responseStatusEl.className = 'status-server-error';
-
-                    const contentType = response.headers.get('content-type');
-                    let responseData;
-                    if (contentType && contentType.includes('application/json')) {
-                        responseData = await response.json();
-                    } else {
-                        responseData = await response.text();
-                    }
-                    
-                    responseBodyEl.textContent = JSON.stringify(responseData, null, 2);
-
-                } catch (error) {
-                    console.error('Ошибка запроса:', error);
-                    responseStatusEl.textContent = 'Ошибка';
-                    responseStatusEl.className = 'status-client-error';
-                    responseBodyEl.textContent = `Не удалось выполнить запрос.\n\n${error.message}`;
-                }
+                    const response = await fetch(url, fetchOptions); const endTime = performance.now(); const responseTime = (endTime - startTime).toFixed(2);
+                    responseStatusEl.textContent = `Статус: ${response.status} ${response.statusText}`; responseTimeEl.textContent = `Время: ${responseTime} мс`;
+                    if (response.status >= 200 && response.status < 300) responseStatusEl.className = 'status-success'; else if (response.status >= 300 && response.status < 400) responseStatusEl.className = 'status-redirect'; else if (response.status >= 400 && response.status < 500) responseStatusEl.className = 'status-client-error'; else if (response.status >= 500) responseStatusEl.className = 'status-server-error';
+                    const contentType = response.headers.get('content-type'); let responseData; if (contentType && contentType.includes('application/json')) { responseData = await response.json(); } else { responseData = await response.text(); } responseBodyEl.textContent = JSON.stringify(responseData, null, 2);
+                } catch (error) { console.error('Ошибка запроса:', error); responseStatusEl.textContent = 'Ошибка'; responseStatusEl.className = 'status-client-error'; responseBodyEl.textContent = `Не удалось выполнить запрос.\n\n${error.message}`; }
             }
 
-            // --- ЛОГИКА ПРОСТОЙ ВЕРСИИ ---
+            // --- ЛОГИКА ПРОСТОЙ ВЕРСИИ (без изменений) ---
             easySendBtn.addEventListener('click', sendEasyRequest);
-
             async function sendEasyRequest() {
-                const endpoint = easyEndpointInput.value;
-                const apiKey = easyKeyInput.value;
+                const endpoint = easyEndpointInput.value; const apiKey = easyKeyInput.value;
+                if (!endpoint) { alert('Пожалуйста, введите API Endpoint.'); return; }
+                let finalUrl = endpoint; if (apiKey) { const separator = finalUrl.includes('?') ? '&' : '?'; finalUrl = `${finalUrl}${separator}api_key=${apiKey}`; }
+                easyResponseBodyEl.textContent = 'Загрузка...';
+                try { const response = await fetch(finalUrl); const data = await response.json(); easyResponseBodyEl.textContent = JSON.stringify(data, null, 2); } catch (error) { console.error('Ошибка запроса:', error); easyResponseBodyEl.textContent = `Не удалось выполнить запрос.\n\n${error.message}`; }
+            }
 
-                if (!endpoint) {
-                    alert('Пожалуйста, введите API Endpoint.');
+            // --- ЛОГИКА ПРОВЕРКИ ИНТЕРНЕТА (без изменений) ---
+            checkInternetBtn.addEventListener('click', checkInternetStatus);
+            async function checkInternetStatus() {
+                internetStatusResultEl.textContent = 'Проверка...'; internetStatusResultEl.className = 'status-result';
+                try { await fetch('https://www.google.com/favicon.ico', { mode: 'no-cors', cache: 'no-cache' }); internetStatusResultEl.textContent = '✅ Сайт имеет доступ к интернету'; internetStatusResultEl.className = 'status-result success'; } catch (error) { internetStatusResultEl.textContent = '❌ У сайта нет доступа к интернету'; internetStatusResultEl.className = 'status-result error'; }
+            }
+
+            // --- ЛОГИКА НАСТОЯЩЕГО ПИНГ-ТЕСТА (ИЗМЕНЕНА) ---
+            pingStartBtn.addEventListener('click', runRealPingTest);
+
+            async function runRealPingTest() {
+                const host = pingHostInput.value.trim();
+                if (!host) {
+                    alert('Пожалуйста, введите домен или IP-адрес.');
                     return;
                 }
-                
-                let finalUrl = endpoint;
-                if (apiKey) {
-                    const separator = finalUrl.includes('?') ? '&' : '?';
-                    finalUrl = `${finalUrl}${separator}api_key=${apiKey}`;
-                }
-                
-                easyResponseBodyEl.textContent = 'Загрузка...';
-                try {
-                    const response = await fetch(finalUrl);
-                    const data = await response.json();
-                    easyResponseBodyEl.textContent = JSON.stringify(data, null, 2);
-                } catch (error) {
-                    console.error('Ошибка запроса:', error);
-                    easyResponseBodyEl.textContent = `Не удалось выполнить запрос.\n\n${error.message}`;
-                }
-            }
 
-            // --- ЛОГИКА ПРОВЕРКИ ИНТЕРНЕТА ---
-            checkInternetBtn.addEventListener('click', checkInternetStatus);
-
-            async function checkInternetStatus() {
-                internetStatusResultEl.textContent = 'Проверка...';
-                internetStatusResultEl.className = 'status-result';
-
-                try {
-                    await fetch('https://www.google.com/favicon.ico', { 
-                        mode: 'no-cors',
-                        cache: 'no-cache' 
-                    });
-                    internetStatusResultEl.textContent = '✅ Сайт имеет доступ к интернету';
-                    internetStatusResultEl.className = 'status-result success';
-                } catch (error) {
-                    internetStatusResultEl.textContent = '❌ У сайта нет доступа к интернету';
-                    internetStatusResultEl.className = 'status-result error';
-                }
-            }
-
-            // --- ЛОГИКА ПИНГ-ТЕСТА ---
-            pingStartBtn.addEventListener('click', runPingTest);
-
-            async function runPingTest() {
-                let host = pingHostInput.value.trim() || 'google.com';
-                if (!host.startsWith('http://') && !host.startsWith('https://')) {
-                    host = 'https://' + host;
-                }
-
-                pingResultsEl.textContent = 'Выполняю тест...';
+                pingResultsEl.textContent = 'Выполняю настоящий пинг...';
                 pingStartBtn.disabled = true;
 
-                const pingCount = 5;
-                const latencies = [];
+                // ИСПОЛЬЗУЕМ НОВЫЙ API
+                const apiUrl = `https://api.techniknews.net/ping/${host}`;
 
-                for (let i = 0; i < pingCount; i++) {
-                    try {
-                        const startTime = performance.now();
-                        // Используем mode: 'no-cors' для обхода CORS, нам важна только скорость ответа
-                        await fetch(host, { mode: 'no-cors', cache: 'no-cache' });
-                        const endTime = performance.now();
-                        const latency = (endTime - startTime).toFixed(2);
-                        latencies.push(parseFloat(latency));
-                        pingResultsEl.textContent += `\nОтвет от ${host}: ${latency} мс`;
-                    } catch (error) {
-                        pingResultsEl.textContent += `\nОтвет от ${host}: Превышено время ожидания`;
+                try {
+                    const response = await fetch(apiUrl);
+                    if (!response.ok) {
+                        throw new Error(`API вернуло ошибку: ${response.status} ${response.statusText}`);
                     }
-                    // Небольшая задержка между пингами
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                }
+                    const result = await response.json();
+                    
+                    // Форматируем вывод на основе ответа НОВОГО API
+                    if (result.online) {
+                        let output = `--- Пинг для ${result.hostname} ---\n`;
+                        output += `IP-адрес: ${result.ip}\n`;
+                        output += `Хост в сети: Да\n`;
+                        output += `Время отклика: ${result.time.toFixed(2)} мс`;
+                        pingResultsEl.textContent = output;
+                    } else {
+                        pingResultsEl.textContent = `--- Пинг для ${host} ---\n\nХост недоступен.`;
+                    }
 
-                if (latencies.length > 0) {
-                    const avgLatency = (latencies.reduce((a, b) => a + b, 0) / latencies.length).toFixed(2);
-                    pingResultsEl.textContent += `\n\nСреднее время: ${avgLatency} мс`;
-                } else {
-                    pingResultsEl.textContent += `\n\nНе удалось получить ответ.`;
+                } catch (error) {
+                    console.error('Ошибка пинг-теста:', error);
+                    pingResultsEl.textContent = `Не удалось выполнить пинг.\n\nВозможные причины:\n- Неверный адрес хоста.\n- Хост недоступен.\n- Проблемы с доступом к API пинга.\n\nОшибка: ${error.message}`;
+                } finally {
+                    pingStartBtn.disabled = false;
                 }
-                
-                pingStartBtn.disabled = false;
             }
         });
     </script>
