@@ -41,7 +41,6 @@
             margin: 0 0 10px 0;
         }
 
-        /* Стили для навигации */
         header nav {
             display: flex;
             justify-content: center;
@@ -63,7 +62,6 @@
         }
 
         main {
-            /* Убираем лишний padding, так как секции внутри будут иметь свои отступы */
             padding: 0;
             background-color: transparent;
             box-shadow: none;
@@ -76,7 +74,6 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
-        /* Класс для скрытия секций */
         .hidden {
             display: none;
         }
@@ -87,10 +84,24 @@
             margin-top: 0;
         }
 
-        .url-method-container, .easy-request-container {
+        .url-method-container {
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
+        }
+
+        .easy-request-container, .ping-test-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .easy-request-container input, .ping-test-container input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
         }
 
         #http-method {
@@ -101,7 +112,7 @@
             background-color: white;
         }
 
-        #url-input, #easy-url-input {
+        #url-input {
             flex-grow: 1;
             padding: 10px;
             border: 1px solid #ccc;
@@ -109,7 +120,7 @@
             font-size: 16px;
         }
 
-        #send-btn, #easy-send-btn, #check-internet-btn {
+        #send-btn, #easy-send-btn, #check-internet-btn, #ping-start-btn {
             padding: 10px 20px;
             border: none;
             border-radius: 5px;
@@ -125,6 +136,8 @@
         #easy-send-btn:hover { background-color: #0056b3; }
         #check-internet-btn { background-color: #17a2b8; padding: 12px 25px; margin-top: 15px;}
         #check-internet-btn:hover { background-color: #138496; }
+        #ping-start-btn { background-color: #6c757d; }
+        #ping-start-btn:hover { background-color: #5a6268; }
 
         .options-container {
             display: grid;
@@ -159,10 +172,10 @@
             color: white;
         }
 
-        .status-success { background-color: #28a745; } /* 2xx */
-        .status-redirect { background-color: #ffc107; color: #212529; } /* 3xx */
-        .status-client-error { background-color: #dc3545; } /* 4xx */
-        .status-server-error { background-color: #6f42c1; } /* 5xx */
+        .status-success { background-color: #28a745; }
+        .status-redirect { background-color: #ffc107; color: #212529; }
+        .status-client-error { background-color: #dc3545; }
+        .status-server-error { background-color: #6f42c1; }
 
         #response-body, #easy-response-body {
             background-color: #2d2d2d;
@@ -183,14 +196,18 @@
             padding: 10px;
         }
 
-        /* Стили для страницы статуса интернета */
-        .status-result {
+        .status-result, #ping-results {
             margin-top: 20px;
             padding: 15px;
             border-radius: 5px;
             font-weight: bold;
             font-size: 18px;
             text-align: center;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            color: #343a40;
+            font-family: monospace;
+            white-space: pre-line;
         }
 
         .status-result.success {
@@ -207,7 +224,7 @@
 
         @media (max-width: 768px) {
             .options-container { grid-template-columns: 1fr; }
-            .url-method-container, .easy-request-container { flex-direction: column; }
+            .url-method-container { flex-direction: column; }
             header nav { flex-direction: column; align-items: center; }
         }
     </style>
@@ -217,6 +234,7 @@
     <header>
         <h1>🚀 API Тестер</h1>
         <nav>
+            <!-- Ссылка на #ping_test НЕ добавляется сюда -->
             <a href="#main" class="nav-link active">Полная версия</a>
             <a href="#easy" class="nav-link">Версия проще</a>
             <a href="#internet_status" class="nav-link">Статус интернета</a>
@@ -224,7 +242,7 @@
     </header>
 
     <main>
-        <!-- СЕКЦИЯ 1: Полная версия API-тестера (по умолчанию) -->
+        <!-- СЕКЦИЯ 1: Полная версия API-тестера -->
         <section id="app-main" class="app-section">
             <div class="request-builder">
                 <h2>Создать запрос</h2>
@@ -269,9 +287,10 @@ Authorization: Bearer YOUR_TOKEN'></textarea>
         <!-- СЕКЦИЯ 2: Простая версия -->
         <section id="app-easy" class="app-section hidden">
             <h2>Простой GET-запрос</h2>
-            <p>Введите URL и нажмите "Отправить". Будет выполнен только GET-запрос.</p>
+            <p>Введите Endpoint и API Key. Ключ будет автоматически добавлен в запрос.</p>
             <div class="easy-request-container">
-                <input type="text" id="easy-url-input" placeholder="https://api.example.com/data">
+                <input type="text" id="easy-endpoint-input" placeholder="API Endpoint, например: https://api.example.com/data">
+                <input type="text" id="easy-key-input" placeholder="API Key (необязательно)">
                 <button id="easy-send-btn">Отправить GET</button>
             </div>
             <div class="response-viewer">
@@ -286,6 +305,17 @@ Authorization: Bearer YOUR_TOKEN'></textarea>
             <p>Нажмите на кнопку ниже, чтобы проверить, имеет ли этот сайт доступ в интернет.</p>
             <button id="check-internet-btn">Проверить статус</button>
             <div id="internet-status-result" class="status-result"></div>
+        </section>
+
+        <!-- СЕКЦИЯ 4: СКРЫТАЯ СТРАНИЦА ПИНГ-ТЕСТА -->
+        <section id="app-ping-test" class="app-section hidden">
+            <h2>🔍 Ping-тест</h2>
+            <p>Введите домен или URL, чтобы измерить время отклика (имитация ping через fetch).</p>
+            <div class="ping-test-container">
+                <input type="text" id="ping-host-input" placeholder="google.com или https://api.github.com">
+                <button id="ping-start-btn">Начать тест</button>
+            </div>
+            <div id="ping-results">Результаты теста появятся здесь...</div>
         </section>
 
     </main>
@@ -314,7 +344,8 @@ Authorization: Bearer YOUR_TOKEN'></textarea>
             const responseBodyEl = document.getElementById('response-body');
 
             // --- Элементы для простой версии ---
-            const easyUrlInput = document.getElementById('easy-url-input');
+            const easyEndpointInput = document.getElementById('easy-endpoint-input');
+            const easyKeyInput = document.getElementById('easy-key-input');
             const easySendBtn = document.getElementById('easy-send-btn');
             const easyResponseBodyEl = document.getElementById('easy-response-body');
 
@@ -322,17 +353,17 @@ Authorization: Bearer YOUR_TOKEN'></textarea>
             const checkInternetBtn = document.getElementById('check-internet-btn');
             const internetStatusResultEl = document.getElementById('internet-status-result');
 
+            // --- Элементы для пинг-теста ---
+            const pingHostInput = document.getElementById('ping-host-input');
+            const pingStartBtn = document.getElementById('ping-start-btn');
+            const pingResultsEl = document.getElementById('ping-results');
+
             // --- РОУТЕР ---
             function handleRouting() {
-                const hash = window.location.hash || '#main'; // По умолчанию показываем главную
-
-                // Скрываем все секции
+                const hash = window.location.hash || '#main';
                 appSections.forEach(section => section.classList.add('hidden'));
-                
-                // Убираем активный класс со всех ссылок
                 navLinks.forEach(link => link.classList.remove('active'));
 
-                // Показываем нужную секцию и подсвечиваем ссылку
                 if (hash === '#main') {
                     document.getElementById('app-main').classList.remove('hidden');
                     document.querySelector('a[href="#main"]').classList.add('active');
@@ -342,12 +373,13 @@ Authorization: Bearer YOUR_TOKEN'></textarea>
                 } else if (hash === '#internet_status') {
                     document.getElementById('app-status').classList.remove('hidden');
                     document.querySelector('a[href="#internet_status"]').classList.add('active');
+                } else if (hash === '#ping_test') {
+                    // Показываем скрытую страницу, но не трогаем активную ссылку в меню
+                    document.getElementById('app-ping-test').classList.remove('hidden');
                 }
             }
 
-            // Слушаем изменения хэша
             window.addEventListener('hashchange', handleRouting);
-            // Вызываем роутер при первой загрузке
             handleRouting();
 
             // --- ЛОГИКА ПОЛНОЙ ВЕРСИИ ---
@@ -427,15 +459,23 @@ Authorization: Bearer YOUR_TOKEN'></textarea>
             easySendBtn.addEventListener('click', sendEasyRequest);
 
             async function sendEasyRequest() {
-                const url = easyUrlInput.value;
-                if (!url) {
-                    alert('Пожалуйста, введите URL.');
+                const endpoint = easyEndpointInput.value;
+                const apiKey = easyKeyInput.value;
+
+                if (!endpoint) {
+                    alert('Пожалуйста, введите API Endpoint.');
                     return;
+                }
+                
+                let finalUrl = endpoint;
+                if (apiKey) {
+                    const separator = finalUrl.includes('?') ? '&' : '?';
+                    finalUrl = `${finalUrl}${separator}api_key=${apiKey}`;
                 }
                 
                 easyResponseBodyEl.textContent = 'Загрузка...';
                 try {
-                    const response = await fetch(url);
+                    const response = await fetch(finalUrl);
                     const data = await response.json();
                     easyResponseBodyEl.textContent = JSON.stringify(data, null, 2);
                 } catch (error) {
@@ -452,20 +492,57 @@ Authorization: Bearer YOUR_TOKEN'></textarea>
                 internetStatusResultEl.className = 'status-result';
 
                 try {
-                    // Пробуем загрузить легковесный ресурс с надежного сервера.
-                    // mode: 'no-cors' нужен, чтобы избежать ошибок CORS, нам важен только факт успешного запроса.
                     await fetch('https://www.google.com/favicon.ico', { 
                         mode: 'no-cors',
                         cache: 'no-cache' 
                     });
-                    // Если fetch не выбросил ошибку, считаем, что интернет есть.
                     internetStatusResultEl.textContent = '✅ Сайт имеет доступ к интернету';
                     internetStatusResultEl.className = 'status-result success';
                 } catch (error) {
-                    // Если fetch упал с ошибкой, значит интернета нет.
                     internetStatusResultEl.textContent = '❌ У сайта нет доступа к интернету';
                     internetStatusResultEl.className = 'status-result error';
                 }
+            }
+
+            // --- ЛОГИКА ПИНГ-ТЕСТА ---
+            pingStartBtn.addEventListener('click', runPingTest);
+
+            async function runPingTest() {
+                let host = pingHostInput.value.trim() || 'google.com';
+                if (!host.startsWith('http://') && !host.startsWith('https://')) {
+                    host = 'https://' + host;
+                }
+
+                pingResultsEl.textContent = 'Выполняю тест...';
+                pingStartBtn.disabled = true;
+
+                const pingCount = 5;
+                const latencies = [];
+
+                for (let i = 0; i < pingCount; i++) {
+                    try {
+                        const startTime = performance.now();
+                        // Используем mode: 'no-cors' для обхода CORS, нам важна только скорость ответа
+                        await fetch(host, { mode: 'no-cors', cache: 'no-cache' });
+                        const endTime = performance.now();
+                        const latency = (endTime - startTime).toFixed(2);
+                        latencies.push(parseFloat(latency));
+                        pingResultsEl.textContent += `\nОтвет от ${host}: ${latency} мс`;
+                    } catch (error) {
+                        pingResultsEl.textContent += `\nОтвет от ${host}: Превышено время ожидания`;
+                    }
+                    // Небольшая задержка между пингами
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+
+                if (latencies.length > 0) {
+                    const avgLatency = (latencies.reduce((a, b) => a + b, 0) / latencies.length).toFixed(2);
+                    pingResultsEl.textContent += `\n\nСреднее время: ${avgLatency} мс`;
+                } else {
+                    pingResultsEl.textContent += `\n\nНе удалось получить ответ.`;
+                }
+                
+                pingStartBtn.disabled = false;
             }
         });
     </script>
