@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Тестер</title>
+    
+    <!-- ======================================= -->
+    <!--             СТИЛИ (CSS)                 -->
+    <!-- ======================================= -->
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header, main, footer {
+            width: 100%;
+            max-width: 900px;
+            background-color: #fff;
+            padding: 20px 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        header {
+            text-align: center;
+            background-color: #6a5acd;
+            color: white;
+        }
+
+        header h1 {
+            margin: 0 0 10px 0;
+        }
+
+        /* Стили для навигации */
+        header nav {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+            opacity: 0.8;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            opacity: 1;
+        }
+
+        main {
+            /* Убираем лишний padding, так как секции внутри будут иметь свои отступы */
+            padding: 0;
+            background-color: transparent;
+            box-shadow: none;
+        }
+
+        .app-section {
+            background-color: #fff;
+            padding: 20px 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Класс для скрытия секций */
+        .hidden {
+            display: none;
+        }
+
+        h2 {
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        .url-method-container, .easy-request-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #http-method {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            background-color: white;
+        }
+
+        #url-input, #easy-url-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        #send-btn, #easy-send-btn, #check-internet-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        #send-btn { background-color: #28a745; }
+        #send-btn:hover { background-color: #218838; }
+        #easy-send-btn { background-color: #007bff; }
+        #easy-send-btn:hover { background-color: #0056b3; }
+        #check-internet-btn { background-color: #17a2b8; padding: 12px 25px; margin-top: 15px;}
+        #check-internet-btn:hover { background-color: #138496; }
+
+        .options-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .option-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .option-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        #response-info {
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        #response-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: white;
+        }
+
+        .status-success { background-color: #28a745; } /* 2xx */
+        .status-redirect { background-color: #ffc107; color: #212529; } /* 3xx */
+        .status-client-error { background-color: #dc3545; } /* 4xx */
+        .status-server-error { background-color: #6f42c1; } /* 5xx */
+
+        #response-body, #easy-response-body {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Fira Code', 'Courier New', Courier, monospace;
+            min-height: 200px;
+        }
+
+        footer {
+            text-align: center;
+            color: #777;
+            background-color: transparent;
+            box-shadow: none;
+            padding: 10px;
+        }
+
+        /* Стили для страницы статуса интернета */
+        .status-result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .status-result.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-result.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 768px) {
+            .options-container { grid-template-columns: 1fr; }
+            .url-method-container, .easy-request-container { flex-direction: column; }
+            header nav { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🚀 API Тестер</h1>
+        <nav>
+            <a href="#main" class="nav-link active">Полная версия</a>
+            <a href="#easy" class="nav-link">Версия проще</a>
+            <a href="#internet_status" class="nav-link">Статус интернета</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- СЕКЦИЯ 1: Полная версия API-тестера (по умолчанию) -->
+        <section id="app-main" class="app-section">
+            <div class="request-builder">
+                <h2>Создать запрос</h2>
+                
+                <div class="url-method-container">
+                    <select id="http-method">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="PATCH">PATCH</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+                    <input type="text" id="url-input" placeholder="Введите URL, например: https://api.example.com/users">
+                    <button id="send-btn">Отправить</button>
+                </div>
+
+                <div class="options-container">
+                    <div class="option-group">
+                        <label for="headers-input">Заголовки (Headers):</label>
+                        <textarea id="headers-input" rows="4" placeholder='Пример:
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN'></textarea>
+                    </div>
+
+                    <div class="option-group">
+                        <label for="body-input">Тело запроса (Body):</label>
+                        <textarea id="body-input" rows="6" placeholder='{"key": "value"} (для POST, PUT, PATCH)'></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="response-viewer">
+                <h2>Ответ</h2>
+                <div id="response-info">
+                    <span id="response-status"></span>
+                    <span id="response-time"></span>
+                </div>
+                <pre><code id="response-body">Здесь будет ответ сервера...</code></pre>
+            </div>
+        </section>
+
+        <!-- СЕКЦИЯ 2: Простая версия -->
+        <section id="app-easy" class="app-section hidden">
+            <h2>Простой GET-запрос</h2>
+            <p>Введите URL и нажмите "Отправить". Будет выполнен только GET-запрос.</p>
+            <div class="easy-request-container">
+                <input type="text" id="easy-url-input" placeholder="https://api.example.com/data">
+                <button id="easy-send-btn">Отправить GET</button>
+            </div>
+            <div class="response-viewer">
+                <h2>Ответ</h2>
+                <pre><code id="easy-response-body">Здесь будет ответ сервера...</code></pre>
+            </div>
+        </section>
+
+        <!-- СЕКЦИЯ 3: Проверка статуса интернета -->
+        <section id="app-status" class="app-section hidden">
+            <h2>Статус доступа к интернету</h2>
+            <p>Нажмите на кнопку ниже, чтобы проверить, имеет ли этот сайт доступ в интернет.</p>
+            <button id="check-internet-btn">Проверить статус</button>
+            <div id="internet-status-result" class="status-result"></div>
+        </section>
+
+    </main>
+
+    <footer>
+        <p>Сделано с помощью HTML, CSS & JavaScript</p>
+    </footer>
+
+    <!-- ======================================= -->
+    <!--            ЛОГИКА (JavaScript)          -->
+    <!-- ======================================= -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- ЭЛЕМЕНЫ УПРАВЛЕНИЯ ---
+            const appSections = document.querySelectorAll('.app-section');
+            const navLinks = document.querySelectorAll('.nav-link');
+
+            // --- Элементы для полной версии ---
+            const httpMethodSelect = document.getElementById('http-method');
+            const urlInput = document.getElementById('url-input');
+            const headersInput = document.getElementById('headers-input');
+            const bodyInput = document.getElementById('body-input');
+            const sendBtn = document.getElementById('send-btn');
+            const responseStatusEl = document.getElementById('response-status');
+            const responseTimeEl = document.getElementById('response-time');
+            const responseBodyEl = document.getElementById('response-body');
+
+            // --- Элементы для простой версии ---
+            const easyUrlInput = document.getElementById('easy-url-input');
+            const easySendBtn = document.getElementById('easy-send-btn');
+            const easyResponseBodyEl = document.getElementById('easy-response-body');
+
+            // --- Элементы для статуса интернета ---
+            const checkInternetBtn = document.getElementById('check-internet-btn');
+            const internetStatusResultEl = document.getElementById('internet-status-result');
+
+            // --- РОУТЕР ---
+            function handleRouting() {
+                const hash = window.location.hash || '#main'; // По умолчанию показываем главную
+
+                // Скрываем все секции
+                appSections.forEach(section => section.classList.add('hidden'));
+                
+                // Убираем активный класс со всех ссылок
+                navLinks.forEach(link => link.classList.remove('active'));
+
+                // Показываем нужную секцию и подсвечиваем ссылку
+                if (hash === '#main') {
+                    document.getElementById('app-main').classList.remove('hidden');
+                    document.querySelector('a[href="#main"]').classList.add('active');
+                } else if (hash === '#easy') {
+                    document.getElementById('app-easy').classList.remove('hidden');
+                    document.querySelector('a[href="#easy"]').classList.add('active');
+                } else if (hash === '#internet_status') {
+                    document.getElementById('app-status').classList.remove('hidden');
+                    document.querySelector('a[href="#internet_status"]').classList.add('active');
+                }
+            }
+
+            // Слушаем изменения хэша
+            window.addEventListener('hashchange', handleRouting);
+            // Вызываем роутер при первой загрузке
+            handleRouting();
+
+            // --- ЛОГИКА ПОЛНОЙ ВЕРСИИ ---
+            sendBtn.addEventListener('click', sendRequest);
+
+            async function sendRequest() {
+                const url = urlInput.value;
+                const method = httpMethodSelect.value;
+                const headersText = headersInput.value;
+                const bodyText = bodyInput.value;
+
+                if (!url) {
+                    alert('Пожалуйста, введите URL.');
+                    return;
+                }
+
+                const headers = {};
+                headersText.split('\n').forEach(line => {
+                    const parts = line.split(':');
+                    if (parts.length === 2) {
+                        headers[parts[0].trim()] = parts[1].trim();
+                    }
+                });
+
+                const fetchOptions = { method: method, headers: headers };
+
+                if (['POST', 'PUT', 'PATCH'].includes(method) && bodyText) {
+                    try {
+                        fetchOptions.body = JSON.parse(bodyText);
+                        if (!headers['Content-Type']) {
+                             fetchOptions.headers['Content-Type'] = 'application/json';
+                        }
+                    } catch (e) {
+                        fetchOptions.body = bodyText;
+                    }
+                }
+                
+                responseBodyEl.textContent = 'Загрузка...';
+                responseStatusEl.textContent = '';
+                responseTimeEl.textContent = '';
+                responseStatusEl.className = '';
+
+                const startTime = performance.now();
+
+                try {
+                    const response = await fetch(url, fetchOptions);
+                    const endTime = performance.now();
+                    const responseTime = (endTime - startTime).toFixed(2);
+
+                    responseStatusEl.textContent = `Статус: ${response.status} ${response.statusText}`;
+                    responseTimeEl.textContent = `Время: ${responseTime} мс`;
+                    
+                    if (response.status >= 200 && response.status < 300) responseStatusEl.className = 'status-success';
+                    else if (response.status >= 300 && response.status < 400) responseStatusEl.className = 'status-redirect';
+                    else if (response.status >= 400 && response.status < 500) responseStatusEl.className = 'status-client-error';
+                    else if (response.status >= 500) responseStatusEl.className = 'status-server-error';
+
+                    const contentType = response.headers.get('content-type');
+                    let responseData;
+                    if (contentType && contentType.includes('application/json')) {
+                        responseData = await response.json();
+                    } else {
+                        responseData = await response.text();
+                    }
+                    
+                    responseBodyEl.textContent = JSON.stringify(responseData, null, 2);
+
+                } catch (error) {
+                    console.error('Ошибка запроса:', error);
+                    responseStatusEl.textContent = 'Ошибка';
+                    responseStatusEl.className = 'status-client-error';
+                    responseBodyEl.textContent = `Не удалось выполнить запрос.\n\n${error.message}`;
+                }
+            }
+
+            // --- ЛОГИКА ПРОСТОЙ ВЕРСИИ ---
+            easySendBtn.addEventListener('click', sendEasyRequest);
+
+            async function sendEasyRequest() {
+                const url = easyUrlInput.value;
+                if (!url) {
+                    alert('Пожалуйста, введите URL.');
+                    return;
+                }
+                
+                easyResponseBodyEl.textContent = 'Загрузка...';
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    easyResponseBodyEl.textContent = JSON.stringify(data, null, 2);
+                } catch (error) {
+                    console.error('Ошибка запроса:', error);
+                    easyResponseBodyEl.textContent = `Не удалось выполнить запрос.\n\n${error.message}`;
+                }
+            }
+
+            // --- ЛОГИКА ПРОВЕРКИ ИНТЕРНЕТА ---
+            checkInternetBtn.addEventListener('click', checkInternetStatus);
+
+            async function checkInternetStatus() {
+                internetStatusResultEl.textContent = 'Проверка...';
+                internetStatusResultEl.className = 'status-result';
+
+                try {
+                    // Пробуем загрузить легковесный ресурс с надежного сервера.
+                    // mode: 'no-cors' нужен, чтобы избежать ошибок CORS, нам важен только факт успешного запроса.
+                    await fetch('https://www.google.com/favicon.ico', { 
+                        mode: 'no-cors',
+                        cache: 'no-cache' 
+                    });
+                    // Если fetch не выбросил ошибку, считаем, что интернет есть.
+                    internetStatusResultEl.textContent = '✅ Сайт имеет доступ к интернету';
+                    internetStatusResultEl.className = 'status-result success';
+                } catch (error) {
+                    // Если fetch упал с ошибкой, значит интернета нет.
+                    internetStatusResultEl.textContent = '❌ У сайта нет доступа к интернету';
+                    internetStatusResultEl.className = 'status-result error';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
